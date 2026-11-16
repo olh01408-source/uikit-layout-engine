@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools>=65.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uikit-layout-engine"
+version = "1.4.2"
+description = "Cross-platform UI constraint and layout solver"
+readme = "README.md"
+requires-python = ">=3.9"

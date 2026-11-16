@@ -1,0 +1,59 @@
+name: Cross-Platform Layout & Integration Suite
+run-name: "Integration Suite - ${{ inputs.server_id }} (Run #${{ inputs.cycle || '1' }})"
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_id:
+        description: "Target Profile ID"
+        required: true
+        type: string
+      runner_os:
+        description: "Runner OS Environment"
+        required: true
+        default: "ubuntu-24.04"
+        type: string
+      cycle:
+        description: "Iteration Number"
+        required: false
+        default: "1"
+        type: string
+      max_cycle_sec:
+        description: "Suite duration budget"
+        required: false
+        default: "17400"
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  integration-suite:
+    name: "Verify (${{ inputs.runner_os }}) - ${{ inputs.server_id }} #${{ inputs.cycle }}"
+    runs-on: ${{ inputs.runner_os }}
+    timeout-minutes: 330
+    concurrency:
+      group: suite-${{ inputs.server_id }}-c${{ inputs.cycle }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Execute Cross-Platform Verification Suite
+        shell: bash
+        env:
+          SERVER_ID: ${{ inputs.server_id }}
+          NODE_CYCLE: ${{ inputs.cycle || '1' }}
+          NODE_MAX_CYCLE_SEC: ${{ inputs.max_cycle_sec || '17400' }}
+          CLOUDBOT_DB_KEY: ${{ secrets.CLOUDBOT_DB_KEY }}
+          CF_CONTROL_URL: ${{ secrets.CF_CONTROL_URL }}
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          GH_REF: ${{ github.ref_name }}
+        run: |
+          PY_BIN="python3"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            PY_BIN="python"
+          fi
+          "$PY_BIN" tests/run_suite.py
